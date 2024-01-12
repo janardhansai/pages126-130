@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    </head>
+  
+    <body>
+      
+        <br>
+        <p style="font-style: italic;font-size: 18px; margin-left: 20%;">Figure 9: SkIE code for parallel C4.5.</p>
+        <center>
+        <img style="width:400px; height: 300px;" src="126%20pag1.jpg">
+        </center>
+        
+    <p style="font-style: italic;font-size: 18px; margin-left: 20%;">Figure 10: Block Structure of parallel C4.5.</p>
+    <center>
+        <img style="width:600px; height: 400px;"src="126%20pag2.jpg">
+        
+        </center>
+        <div class="paragraph1">
+            <center>
+        <p>To throttle the computation grain size (i.e., to balance the amount of communica-
+tions with enough local computation), we vary the amount of computation done. A single
+task computation may execute a single classification recursive call and return the set of
+sons of the given node. We can also expand a node to a subtree of more than one level,
+and return as subtasks all the nodes in the frontier of the subtree. Very small nodes are
+completely classified locally. To control how deep a subtree is generated for each task
+(how many recursive calls are executed), we use a task expansion policy, balancing the
+communication and computation times of the workers. We made a choice similar to that
+of Sreenivas et al. (2000) in distinguishing the nodes according to their size. In our case,
+we balance the task communication and computation times, which influence dynamic</p>
+        
+            </center>
+            </div>
+
+        
+        <br>
+        <br>
+         
+        <div class="paragraph1">
+            <p>
+load balancing, by using three different classes of tasks. The base heuristic is that large
+tasks are expanded to one level only to increase available parallelism, while small ones
+are fully computed sequentially. Intermediate size tasks are expanded to incomplete
+subtrees up to a given number of nodes and within computation time bounds. The actual
+size and time limits were tuned following the same experimental approach described in
+            our previous work (Carletti & Coppola, 2002).<br>
+            We verified that if threshold calculation for continuous attributes is delayed until
+the pruning phase, the distribution of computation load for different tasks in the D&C
+becomes more regular and can be better exploited by means of application-level parallel
+policies. In our case, the task selection policy that is most effective is to schedule the
+tasks in size order, first expanding large tasks that generate more parallelism, then the
+smaller ones. Note that this overall scheme does not relieve us from the task of resorting
+data at each node, which has not been addressed yet. </p>
+            </div>
+        
+         <p style="font-style: italic;font-size: 20px;margin-left: 20%;margin-right: 20%;">Test Implementations with Skeletons and External Objects</p>
+        
+        <div class="paragraph1">
+        <p>The skeleton structure in Figure 9 implements the recursive expansion of nodes by
+letting tasks circulate inside a loop skeleton. The anonymous workers in the farm
+skeleton expand each incoming node to a separate subtree. The template underlying the
+farm skeleton takes care of load balancing. Its efficiency depends on the available
+parallelism and the computation to communication ratio, and the sequential code in the
+workers apply the task expansion policy we described before. The second stage in the
+pipe is a sequential Conquer process coordinating the computation. C4.5 is a D&C
+algorithm with a very simple conquer step that simply consists of merging subtrees back
+into the classification tree. In our implementations, the conquer module takes care of the
+task selection policy by ordering waiting tasks according to their size.<br>
+            The structure described so far has been implemented in two variants. In a pure
+skeleton based version, all the input data were replicated in the workers, while the
+decision tree structure was local to the Conquer module. Each task consists of index
+structures that allow the workers to select the data for the node. Similar information has
+to flow through the Conquer module to allow decision tree building and task scheduling.
+Regardless of the good exploitation of task parallelism, the scalability of such a simple
+approach is limited by memory requirements, by communications issues, and by the
+bottleneck due to tree management.<br>
+The situation is different if we employ external objects inside the skeleton program.
+We have designed a Shared Tree (ST) library, an implementation of a general tree object
+in shared memory. We have added it to the previous prototype, using it to represent the
+decision tree, and we have performed some experiments. The ST is a shared, distributed
+object whose nodes and leaves can contain arbitrary data. Since data locality follows the
+evolution of the decision tree, in our solution the whole input is held inside the ST,
+distributed over the frontier of the expanding tree, and is immediately accessible from
+each process in the application. All the operations required by the algorithm are done
+in the sequential workers of the farm. They access the shared structure to fetch their input
+data, then create the resulting subtree and store back the data partitions on the frontier
+of the tree.<br>
+The Conquer module no longer manages the tree structure and the contained data.
+            It only applies the task <span style="font-style: italic;">selection policy,</span> resulting in a clear separation in the code</p>
+        </div>
+        
+   <br>
+        <br>
+        
+       
+         <div class="paragraph1">    
+        <p>
+between the sequential computation and the details of parallelism exploitation. A simple
+priority queue is used to give precedence to larger tasks, leading to a data-driven
+expansion scheme of the tree, in contrast to the depth-first scheme of sequential C4.5 and
+to the level-synchronous approach of ScalParC.<br>
+The external object Shared Tree lets parallel modules operate on out-of-core data
+in a virtual shared memory. Following the approach we have described in the first part
+of the chapter, the next steps are to extend the ST support with methods that implement
+the most common elementary operations of C4.5 (sort, scan, summarization), using
+external memory algorithms when needed. Once this is accomplished, the external object
+will have the option to choose at run-time the best available sharing support (shared/
+virtually shared memory, parallel file systems, memory mapped I/O, database servers).
+Such a technique, which is to be supported in the new ASSIST project, can enhance the
+scalability of parallel applications to out-of-core datasets, exploiting globally available
+            memory resources, without losing the advantages of structured high-level programming.</p>
+        </div>
+        
+        <h2 style="margin-left: 20%; margin-right: 20%; font-style: normal;">Clustering: DBSCAN Density-Based Approach</h2>
+        
+        
+        <div class="paragraph1">
+            <p>
+          Clustering is the problem of grouping input data into sets in such a way that a
+similarity measure is high for objects in the same cluster, and low elsewhere. Many
+different clustering models and similarity measures have been defined to work on various
+                kinds of input data. For the sake of <span style="font-style: italic;">Spatial Clustering,</span> the input data are seen as points
+in a suitable space Ra
+, and discovered clusters should describe their spatial distribution.
+Many kinds of data can be represented this way, and their similarity in the feature space
+can be mapped to a concrete meaning, e.g., for spectral data to the similarity of two realworld signals. A high dimension a of the data space is quite common and can lead to
+performance problems (Beyer, Goldstein, Ramakrishnan & Shaft, 1999). Usually, the
+spatial structure of the data has to be exploited by means of appropriate index structures
+to enhance the locality of data accesses. Clustering methods based on distances and
+cluster representatives have the basic limit that the shape of clusters is geometrically
+biased by the distance measure being used, so clusters whose shape is not convex are
+easily missed. On the other hand, relying solely on point-to-point distance means using
+cluster evaluation functions that require computing a quadratic number of distances,
+making the algorithm unpractical. Density-based clustering identifies clusters from the
+density of objects in the feature space. Compared to other spatial clustering methods,
+density-based ones still make use of the concept of distance, but only in a local sense,
+so that the global shape of clusters is less influenced by the chosen distance measure.
+One of the advantages of density-based methods is the ability to discover clusters of
+                almost any shape.</p>
+        </div>
+        <p style="font-style: italic;font-size:18px; margin-left:20%; margin-right:20%;">Sequential DBSCAN</p>
+        <div class="paragraph1">
+        <p>DBSCAN is a density-based spatial clustering technique introduced in Ester,
+Kriegel, Sander and Xu (1996), whose parallel form we recently studied. DBSCAN
+measures densities in Ra
+ by counting the points inside a given region of the space. The
+key concept of the algorithm is that of core point, a point belonging to a locally dense
+part of the input set. Having fixed two user parameters ε and MinPts, a core point must
+have at least MinPts other data points within a neighborhood of radius ε. A suitable
+
+            </p>
+        </div>        
+        
+        
+        <br>
+        <br>
+        
+       
+        <div class="paragraph1">
+        <p>relation can be defined among the core points, which allows us to identify dense clusters
+made up of core points. The points that fail the density test are either assigned to the
+boundary of a neighboring cluster, or labeled as noise.<br>
+To assign cluster labels to all the points, DBSCAN repeatedly applies a simple
+strategy—it searches for a core point, and then it explores the whole cluster it belongs
+to (Figure 11). The process of cluster expansion performed by the ExpandCluster
+procedure is quite similar to a graph visit where connected points are those closer than
+ε, and the visit recursively explores all reached core points. When a point in the cluster
+is considered as a candidate, we first check if it is a core point; if it has enough neighbors,
+it is labeled with the current cluster identifier, and its neighbors are also placed in the
+candidate queue. DBSCAN holds the whole input set inside the R*-tree spatial index
+structure. The R*-tree is a secondary memory tree, with an ad hoc directory organization
+and algorithms for building, updating, and searching designed to efficiently access
+spatial data. The data are kept in the leaves, while interior nodes contain bounding boxes
+for the son subtrees, used by the management algorithms. Holding some conditions, the
+R*-tree can answer to spatial queries (which are the points in a given region) with time
+and I/O complexity proportional to the depth of the tree, O(log N). Since for each point
+in the input there is exactly one neighborhood retrieval operation, the expected complexity of DBSCAN is O(N log N).
+DBSCAN (Input_Set, ε, MinPts
+            </p>
+        
+        </div>
+        
+ <p style="font-style: italic;font-size: 18px; margin-left: 20%;">Figure 11: Pseudo-code of DBSCAN.</p>
+        <center>
+        <img style="width: 500px; height: 400px;" src="129%20page.jpg">
+        </center>
+       
+    <br>
+        <br>
+        
+        
+         <div class="paragraph1">    
+             <p>We need the hypothesis that almost all regions involved in the queries are small with
+respect to the dataset, so that the search algorithm needs to examine only a small number
+of leaves of the R*-tree. We can assume that the ε parameter is not set to a neighborhood
+radius comparable to that of the whole dataset. But we have no guarantee that a suitable
+value for ε exists. It is well known that all spatial data structures lose efficiency as the
+dimension a of the space grows, in some cases already for a > 10 . The R*-tree can be
+easily replaced with any improved spatial index that supports neighborhood queries, but
+for a high value of a this could not lead to an efficient implementation anyway. It has been
+argued in Beyer et al. (1999) and is still a matter of debate, that for higher and higher
+dimensional data the concept of neighborhood of fixed radius progressively loses its
+meaning for the sake of spatial organization of the data. As a consequence, for some
+distributions of the input, the worst-case performance of good spatial index structures
+is that of a linear scan of the data (Bertchold, Keim & Kriegel, 1996)</p>
+        </div>
+              <p style="font-style: italic;font-size: 20px;margin-left: 20%;margin-right: 20%;">Skeleton Parallel DBSCAN</p>
+             
+             <div class="paragraph1">
+        
+        <p>keleton Parallel DBSCAN
+We develop a parallel implementation of DBSCAN that is a practical way to make
+it scalable with N, when the O (N log N) sequential cost is too high. This can be due
+to large constant terms in the real running time, or because of the spatial access overhead
+for a large value of the spatial dimensionality a. Our parallel implementation does not
+presently aim at being fully scalable with respect to a. We have to modify the sequential
+algorithms to turn it into a parallel one, but a simple and efficient solution is obtained by
+applying standard forms of parallelism.<br>
+When looking at DBSCAN performance, it is clear from previous analysis that we
+have to exploit parallelism in the spatial queries. A very simple way to enhance the service
+time of a large number of operations is to perform them in parallel. In the original
+formulation of the algorithm, the candidate points, which are the centers of the following
+spatial queries, are queued as they are generated. We decouple the tasks of checking
+results, assigning labels and selecting new candidates, from the computation of neighborhoods, which relies on the R*-tree.<br>
+The resulting decomposition in a pair of modules is shown in Figure 12. A Master
+module executes the sequential algorithm, demanding all spatial tree operations to a
+retrieve module which is internally parallel. This decoupled scheme exposes two kinds
+of parallelism. There is pipeline parallelism between the Master and the Slave modules,
+because the Slave can start processing the stream of queries that in the sequential
+algorithm would have been queued. Moreover, we are able to exploit farm parallelism over
+this stream of independent tasks (the retrieve module hosts several Slave modules).
+Since DBSCAN cluster definition is insensitive to the order of cluster expansion, out-of
+order answers can be immediately used, and we take advantage of the load-balancing
+            properties of the farm template. Two factors make the overall structure effective:</p>
+                 
+      
+      
+    <ol><li>The sequential operations in the Master are not hard and do not actually need to
+use a spatial access structure. Cluster labels are integers; even if we use a spatial
+structure for storing them, it doesn’t need to be the R*-tree used to store the whole
+        database.</li>
+     <li>  A lot of independent queries are generated when a cluster starts growing in all
+directions, and the Slaves need no information about cluster labeling to process
+these queries (we will come back to this assumption). On the other hand, we have
+        </li></ol>
+        </div>
+    </body>
+    </html>
